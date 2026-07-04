@@ -18,7 +18,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "transactions")
-public class Transaction {
+public class Transaction extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,9 +43,6 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TransactionSource source;
-
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
 
     protected Transaction() {
     }
@@ -109,9 +106,5 @@ public class Transaction {
 
     public void setSource(TransactionSource source) {
         this.source = source;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 }

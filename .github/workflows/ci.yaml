@@ -52,4 +52,5 @@ jobs:
           DB_URL: jdbc:postgresql://localhost:5432/financiando_test
           DB_USER: test_user
           DB_PASSWORD: test_pass
+          TWILIO_AUTH_TOKEN: dummy_token_for_tests
         run: mvn -B clean verify

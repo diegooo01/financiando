@@ -39,7 +39,7 @@ public class TransactionService {
     }
 
     public List<TransactionResponse> findAll() {
-        return transactionRepository.findAll()
+        return transactionRepository.findAllWithCategory()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -59,8 +59,10 @@ public class TransactionService {
         transaction.setCategory(category);
         transaction.setOccurredAt(request.occurredAt());
 
-        Transaction saved = transactionRepository.save(transaction);
-        return toResponse(saved);
+        transactionRepository.save(transaction);
+
+        Transaction reloaded = getEntityById(id);
+        return toResponse(reloaded);
     }
 
     public void delete(Long id) {
@@ -69,7 +71,7 @@ public class TransactionService {
     }
 
     private Transaction getEntityById(Long id) {
-        return transactionRepository.findById(id)
+        return transactionRepository.findByIdWithCategory(id)
                 .orElseThrow(() -> new NotFoundException("Transacción no encontrada: " + id));
     }
 

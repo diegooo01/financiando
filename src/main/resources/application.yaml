@@ -29,3 +29,8 @@ server:
 
 twilio:
   auth-token: ${TWILIO_AUTH_TOKEN}
+
+ai:
+  api-key: ${OPENROUTER_API_KEY}
+  base-url: https://openrouter.ai/api/v1
+  model: openrouter/free

@@ -19,6 +19,7 @@ class ExpenseParserTest {
     @BeforeEach
     void setUp() {
         CategoryRepository categoryRepository = mock(CategoryRepository.class);
+        AiExpenseParser aiExpenseParser = mock(AiExpenseParser.class);
 
         Category comida = new Category("Comida", "🍽️", List.of("almuerzo", "comida", "cena"));
         Category transporte = new Category("Transporte", "🚌", List.of("taxi", "uber", "bus"));
@@ -27,7 +28,10 @@ class ExpenseParserTest {
         when(categoryRepository.findAll())
                 .thenReturn(List.of(comida, transporte, otros));
 
-        parser = new ExpenseParser(categoryRepository);
+        when(aiExpenseParser.parse(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(ParsedExpense.failure());
+
+        parser = new ExpenseParser(categoryRepository, aiExpenseParser);
     }
 
     @Test
@@ -57,7 +61,7 @@ class ExpenseParserTest {
     }
 
     @Test
-    void usaOtrosCuandoNoHayKeyword() {
+    void usaOtrosCuandoNoHayKeywordNiIa() {
         ParsedExpense result = parser.parse("no se que 40");
 
         assertThat(result.successful()).isTrue();

@@ -18,9 +18,12 @@ public class ExpenseParser {
     private static final String DEFAULT_CATEGORY_NAME = "Otros";
 
     private final CategoryRepository categoryRepository;
+    private final AiExpenseParser aiExpenseParser;
 
-    public ExpenseParser(CategoryRepository categoryRepository) {
+    public ExpenseParser(CategoryRepository categoryRepository,
+                         AiExpenseParser aiExpenseParser) {
         this.categoryRepository = categoryRepository;
+        this.aiExpenseParser = aiExpenseParser;
     }
 
     public ParsedExpense parse(String message) {
@@ -36,9 +39,19 @@ public class ExpenseParser {
         }
 
         List<Category> categories = categoryRepository.findAll();
-        Category category = matchCategory(normalized, categories);
+        Category matched = matchCategoryByKeyword(normalized, categories);
 
-        return ParsedExpense.success(amount, category, message.trim());
+        if (matched != null) {
+            return ParsedExpense.success(amount, matched, message.trim());
+        }
+
+        ParsedExpense aiResult = aiExpenseParser.parse(message);
+        if (aiResult.successful()) {
+            return aiResult;
+        }
+
+        Category fallback = findDefaultCategory(categories);
+        return ParsedExpense.success(amount, fallback, message.trim());
     }
 
     private BigDecimal extractAmount(String text) {
@@ -50,7 +63,7 @@ public class ExpenseParser {
         return null;
     }
 
-    private Category matchCategory(String text, List<Category> categories) {
+    private Category matchCategoryByKeyword(String text, List<Category> categories) {
         for (Category category : categories) {
             for (String keyword : category.getKeywords()) {
                 if (text.contains(keyword.toLowerCase())) {
@@ -58,6 +71,10 @@ public class ExpenseParser {
                 }
             }
         }
+        return null;
+    }
+
+    private Category findDefaultCategory(List<Category> categories) {
         return categories.stream()
                 .filter(c -> c.getName().equals(DEFAULT_CATEGORY_NAME))
                 .findFirst()

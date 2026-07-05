@@ -23,12 +23,22 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         List<Category> defaults = List.of(
-                new Category("Comida", "🍽️"),
-                new Category("Transporte", "🚌"),
-                new Category("Entretenimiento", "🎮"),
-                new Category("Servicios", "💡"),
-                new Category("Salud", "💊"),
-                new Category("Otros", "📦")
+                new Category("Comida", "🍽️", List.of(
+                        "almuerzo", "comida", "menu", "menú", "cena", "desayuno",
+                        "restaurante", "café", "cafe", "snack", "lonche")),
+                new Category("Transporte", "🚌", List.of(
+                        "taxi", "uber", "bus", "combi", "metro", "metropolitano",
+                        "pasaje", "gasolina", "grifo", "transporte")),
+                new Category("Entretenimiento", "🎮", List.of(
+                        "cine", "pelicula", "película", "juego", "netflix", "spotify",
+                        "concierto", "salida", "fiesta", "trago", "cerveza")),
+                new Category("Servicios", "💡", List.of(
+                        "luz", "agua", "internet", "celular", "recibo", "alquiler",
+                        "servicio", "telefono", "teléfono")),
+                new Category("Salud", "💊", List.of(
+                        "farmacia", "medicina", "doctor", "clinica", "clínica",
+                        "gym", "gimnasio", "consulta")),
+                new Category("Otros", "📦", List.of())
         );
 
         categoryRepository.saveAll(defaults);

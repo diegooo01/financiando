@@ -7,6 +7,7 @@ import com.ando.financiando.model.Category;
 import com.ando.financiando.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,7 +23,8 @@ public class CategoryService {
         if (categoryRepository.existsByName(request.name())) {
             throw new IllegalArgumentException("Ya existe una categoría con ese nombre");
         }
-        Category category = new Category(request.name(), request.emoji());
+        List<String> keywords = request.keywords() != null ? request.keywords() : new ArrayList<>();
+        Category category = new Category(request.name(), request.emoji(), keywords);
         Category saved = categoryRepository.save(category);
         return toResponse(saved);
     }
@@ -43,7 +45,8 @@ public class CategoryService {
         return new CategoryResponse(
                 category.getId(),
                 category.getName(),
-                category.getEmoji()
+                category.getEmoji(),
+                category.getKeywords()
         );
     }
 }

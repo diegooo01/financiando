@@ -3,6 +3,8 @@ package com.ando.financiando.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public record CreateCategoryRequest(
 
         @NotBlank(message = "El nombre es obligatorio")
@@ -10,6 +12,8 @@ public record CreateCategoryRequest(
         String name,
 
         @Size(max = 8, message = "Emoji inválido")
-        String emoji
+        String emoji,
+
+        List<String> keywords
 ) {
 }

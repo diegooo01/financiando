@@ -7,6 +7,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "categories")
 public class Category {
@@ -21,12 +29,21 @@ public class Category {
     @Column(length = 8)
     private String emoji;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "category_keywords",
+            joinColumns = @JoinColumn(name = "category_id")
+    )
+    @Column(name = "keyword")
+    private List<String> keywords = new ArrayList<>();
+
     protected Category() {
     }
 
-    public Category(String name, String emoji) {
+    public Category(String name, String emoji, List<String> keywords) {
         this.name = name;
         this.emoji = emoji;
+        this.keywords = keywords;
     }
 
     public Long getId() {
@@ -48,4 +65,8 @@ public class Category {
     public void setEmoji(String emoji) {
         this.emoji = emoji;
     }
+
+    public List<String> getKeywords() { return keywords; }
+
+    public void setKeywords(List<String> keywords) { this.keywords = keywords; }
 }

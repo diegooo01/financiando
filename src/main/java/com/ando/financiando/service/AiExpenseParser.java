@@ -29,35 +29,41 @@ public class AiExpenseParser {
         this.objectMapper = objectMapper;
     }
 
-    public ParsedExpense parse(String message) {
+    public AiParseResult parse(String message) {
         List<Category> categories = categoryRepository.findAll();
         String categoryNames = categories.stream()
                 .map(Category::getName)
                 .collect(Collectors.joining(", "));
 
         String systemPrompt = """
-                Eres un asistente que extrae gastos de mensajes en español peruano.
-                Devuelve SOLO un JSON válido, sin texto adicional, con esta forma exacta:
-                {"amount": number, "category": "string", "description": "string"}
+                Eres un asistente que extrae gastos de mensajes en español peruano y los clasifica.
+                Devuelve SOLO un JSON válido, sin texto adicional, con esta forma:
+                {"amount": number, "description": "string", "existingCategory": "string o null", "newCategory": "string o null", "newCategoryEmoji": "string o null"}
 
-                Reglas:
-                - "amount" es el monto numérico del gasto (sin símbolo de moneda).
-                - "category" DEBE ser exactamente una de estas: %s
-                - Si no encaja en ninguna, usa "Otros".
+                Categorías existentes: %s
+
+                Cómo clasificar:
+                - Analiza el TEMA REAL del gasto, no solo palabras sueltas.
+                  Ejemplo: "comida para el perro" NO es Comida (esa es para personas), es tema de MASCOTAS.
+                  Ejemplo: "veterinario" NO es Salud (esa es para personas), es tema de MASCOTAS.
+                - Si el tema encaja claramente en una categoría existente, pon su nombre en "existingCategory" y "newCategory" en null.
+                - Si el tema es claramente distinto a las categorías existentes y es algo que una persona registraría de forma recurrente (ej: Mascotas, Educación, Tecnología, Ropa, Regalos, Viajes, Hogar), SUGIERE una categoría nueva: pon "existingCategory" en null, "newCategory" con un nombre corto y "newCategoryEmoji" con un emoji apropiado.
+                - Prefiere sugerir una categoría específica antes que forzar el gasto en una existente que no encaja bien o en "Otros".
+                - "amount" es el monto numérico (sin símbolo de moneda).
                 - "description" es un resumen corto del gasto.
-                - Si el mensaje no contiene ningún gasto con monto, devuelve {"amount": 0, "category": "Otros", "description": ""}.
+                - Si el mensaje no contiene ningún gasto con monto, devuelve amount 0.
                 """.formatted(categoryNames);
 
         try {
             String rawResponse = aiClient.chat(systemPrompt, message);
-            return parseAiResponse(rawResponse, categories);
+            return parseAiResponse(rawResponse);
         } catch (Exception e) {
             log.warn("Falló el parseo con IA para el mensaje: '{}'. Causa: {}", message, e.getMessage());
-            return ParsedExpense.failure();
+            return AiParseResult.failure();
         }
     }
 
-    private ParsedExpense parseAiResponse(String rawResponse, List<Category> categories) throws Exception {
+    private AiParseResult parseAiResponse(String rawResponse) throws Exception {
         String cleaned = rawResponse
                 .replaceAll("(?s)```json", "")
                 .replaceAll("(?s)```", "")
@@ -67,20 +73,25 @@ public class AiExpenseParser {
 
         BigDecimal amount = json.get("amount").decimalValue();
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return ParsedExpense.failure();
+            return AiParseResult.failure();
         }
 
-        String categoryName = json.get("category").asText();
-        String description = json.get("description").asText();
+        String description = getText(json, "description");
+        String existingCategory = getText(json, "existingCategory");
+        String newCategory = getText(json, "newCategory");
+        String newCategoryEmoji = getText(json, "newCategoryEmoji");
 
-        Category category = categories.stream()
-                .filter(c -> c.getName().equalsIgnoreCase(categoryName))
-                .findFirst()
-                .orElseGet(() -> categories.stream()
-                        .filter(c -> c.getName().equals("Otros"))
-                        .findFirst()
-                        .orElse(categories.get(0)));
+        return new AiParseResult(
+                amount, description, existingCategory,
+                newCategory, newCategoryEmoji, true);
+    }
 
-        return ParsedExpense.success(amount, category, description);
+    private String getText(JsonNode json, String field) {
+        JsonNode node = json.get(field);
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        String value = node.asText();
+        return value.isBlank() || value.equalsIgnoreCase("null") ? null : value;
     }
 }

@@ -4,6 +4,7 @@ import com.ando.financiando.dto.CategoryResponse;
 import com.ando.financiando.dto.CreateCategoryRequest;
 import com.ando.financiando.exception.NotFoundException;
 import com.ando.financiando.model.Category;
+import com.ando.financiando.model.TransactionType;
 import com.ando.financiando.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,8 @@ public class CategoryService {
             throw new IllegalArgumentException("Ya existe una categoría con ese nombre");
         }
         List<String> keywords = request.keywords() != null ? request.keywords() : new ArrayList<>();
-        Category category = new Category(request.name(), request.emoji(), keywords);
+        TransactionType type = request.type() != null ? request.type() : TransactionType.EXPENSE;
+        Category category = new Category(request.name(), request.emoji(), type, keywords);
         Category saved = categoryRepository.save(category);
         return toResponse(saved);
     }
@@ -46,6 +48,7 @@ public class CategoryService {
                 category.getId(),
                 category.getName(),
                 category.getEmoji(),
+                category.getType(),
                 category.getKeywords()
         );
     }

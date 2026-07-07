@@ -1,16 +1,6 @@
 package com.ando.financiando.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,12 +27,17 @@ public class Category {
     @Column(name = "keyword")
     private List<String> keywords = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private TransactionType type = TransactionType.EXPENSE;
+
     protected Category() {
     }
 
-    public Category(String name, String emoji, List<String> keywords) {
+    public Category(String name, String emoji, TransactionType type, List<String> keywords) {
         this.name = name;
         this.emoji = emoji;
+        this.type = type;
         this.keywords = keywords;
     }
 
@@ -69,4 +64,12 @@ public class Category {
     public List<String> getKeywords() { return keywords; }
 
     public void setKeywords(List<String> keywords) { this.keywords = keywords; }
+
+    public TransactionType getType() {
+        return type;
+    }
+
+    public void setType(TransactionType type) {
+        this.type = type;
+    }
 }

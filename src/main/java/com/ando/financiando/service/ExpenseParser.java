@@ -45,9 +45,21 @@ public class ExpenseParser {
             return ParsedExpense.success(amount, matched, message.trim());
         }
 
-        ParsedExpense aiResult = aiExpenseParser.parse(message);
-        if (aiResult.successful()) {
-            return aiResult;
+        AiParseResult ai = aiExpenseParser.parse(message);
+
+        if (ai.successful()) {
+            if (ai.suggestsNewCategory()) {
+                return ParsedExpense.suggestion(
+                        ai.amount(),
+                        ai.description(),
+                        ai.suggestedNewCategoryName(),
+                        ai.suggestedNewCategoryEmoji());
+            }
+
+            Category aiCategory = findByName(ai.existingCategoryName(), categories);
+            if (aiCategory != null) {
+                return ParsedExpense.success(ai.amount(), aiCategory, ai.description());
+            }
         }
 
         Category fallback = findDefaultCategory(categories);
@@ -72,6 +84,16 @@ public class ExpenseParser {
             }
         }
         return null;
+    }
+
+    private Category findByName(String name, List<Category> categories) {
+        if (name == null) {
+            return null;
+        }
+        return categories.stream()
+                .filter(c -> c.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
 
     private Category findDefaultCategory(List<Category> categories) {

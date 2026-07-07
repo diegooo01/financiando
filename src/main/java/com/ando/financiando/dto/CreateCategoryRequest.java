@@ -1,5 +1,6 @@
 package com.ando.financiando.dto;
 
+import com.ando.financiando.model.TransactionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -13,6 +14,8 @@ public record CreateCategoryRequest(
 
         @Size(max = 8, message = "Emoji inválido")
         String emoji,
+
+        TransactionType type,
 
         List<String> keywords
 ) {

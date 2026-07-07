@@ -1,5 +1,6 @@
 package com.ando.financiando.dto;
 
+import com.ando.financiando.model.TransactionType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -20,6 +21,8 @@ public record CreateTransactionRequest(
         Long categoryId,
 
         @NotNull(message = "La fecha es obligatoria")
-        LocalDate occurredAt
+        LocalDate occurredAt,
+
+        TransactionType type
 ) {
 }

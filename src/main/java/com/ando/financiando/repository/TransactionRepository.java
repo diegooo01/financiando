@@ -21,4 +21,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByOccurredAtBetween(LocalDate start, LocalDate end);
 
     List<Transaction> findByCategoryId(Long categoryId);
+
+    @Query("""
+            SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t
+            WHERE t.type = :type AND t.occurredAt BETWEEN :start AND :end
+            """)
+    java.math.BigDecimal sumByTypeBetween(
+            @org.springframework.data.repository.query.Param("type") com.ando.financiando.model.TransactionType type,
+            @org.springframework.data.repository.query.Param("start") java.time.LocalDate start,
+            @org.springframework.data.repository.query.Param("end") java.time.LocalDate end);
 }

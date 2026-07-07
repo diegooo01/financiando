@@ -44,16 +44,21 @@ public class Transaction extends Auditable{
     @Column(nullable = false, length = 20)
     private TransactionSource source;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private TransactionType type = TransactionType.EXPENSE;
+
     protected Transaction() {
     }
 
     public Transaction(BigDecimal amount, String description, Category category,
-                       LocalDate occurredAt, TransactionSource source) {
+                       LocalDate occurredAt, TransactionSource source, TransactionType type) {
         this.amount = amount;
         this.description = description;
         this.category = category;
         this.occurredAt = occurredAt;
         this.source = source;
+        this.type = type;
     }
 
     public Long getId() {
@@ -106,5 +111,13 @@ public class Transaction extends Auditable{
 
     public void setSource(TransactionSource source) {
         this.source = source;
+    }
+
+    public TransactionType getType() {
+        return type;
+    }
+
+    public void setType(TransactionType type) {
+        this.type = type;
     }
 }

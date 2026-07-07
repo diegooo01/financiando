@@ -6,6 +6,7 @@ import com.ando.financiando.exception.NotFoundException;
 import com.ando.financiando.model.Category;
 import com.ando.financiando.model.Transaction;
 import com.ando.financiando.model.TransactionSource;
+import com.ando.financiando.model.TransactionType;
 import com.ando.financiando.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +32,8 @@ public class TransactionService {
                 request.description(),
                 category,
                 request.occurredAt(),
-                TransactionSource.DASHBOARD
+                TransactionSource.DASHBOARD,
+                request.type() != null ? request.type() : TransactionType.EXPENSE
         );
 
         Transaction saved = transactionRepository.save(transaction);
@@ -84,6 +86,7 @@ public class TransactionService {
                 t.getCategory().getName(),
                 t.getOccurredAt(),
                 t.getSource(),
+                t.getType(),
                 t.getCreatedAt()
         );
     }

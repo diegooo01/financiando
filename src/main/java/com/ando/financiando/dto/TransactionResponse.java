@@ -1,6 +1,7 @@
 package com.ando.financiando.dto;
 
 import com.ando.financiando.model.TransactionSource;
+import com.ando.financiando.model.TransactionType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -14,6 +15,7 @@ public record TransactionResponse(
         String categoryName,
         LocalDate occurredAt,
         TransactionSource source,
+        TransactionType type,
         Instant createdAt
 ) {
 }

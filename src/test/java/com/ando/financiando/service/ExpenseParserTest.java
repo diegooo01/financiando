@@ -1,6 +1,7 @@
 package com.ando.financiando.service;
 
 import com.ando.financiando.model.Category;
+import com.ando.financiando.model.TransactionType;
 import com.ando.financiando.repository.CategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -21,15 +23,15 @@ class ExpenseParserTest {
         CategoryRepository categoryRepository = mock(CategoryRepository.class);
         AiExpenseParser aiExpenseParser = mock(AiExpenseParser.class);
 
-        Category comida = new Category("Comida", "🍽️", List.of("almuerzo", "comida", "cena"));
-        Category transporte = new Category("Transporte", "🚌", List.of("taxi", "uber", "bus"));
-        Category otros = new Category("Otros", "📦", List.of());
+        Category comida = new Category("Comida", "🍽️", TransactionType.EXPENSE, List.of("almuerzo", "comida", "cena"));
+        Category transporte = new Category("Transporte", "🚌", TransactionType.EXPENSE, List.of("taxi", "uber", "bus"));
+        Category otros = new Category("Otros", "📦", TransactionType.EXPENSE, List.of());
 
         when(categoryRepository.findAll())
                 .thenReturn(List.of(comida, transporte, otros));
 
-        when(aiExpenseParser.parse(org.mockito.ArgumentMatchers.anyString()))
-                .thenReturn(ParsedExpense.failure());
+        when(aiExpenseParser.parse(anyString()))
+                .thenReturn(AiParseResult.failure());
 
         parser = new ExpenseParser(categoryRepository, aiExpenseParser);
     }

@@ -41,4 +41,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @org.springframework.data.repository.query.Param("categoryId") Long categoryId,
             @org.springframework.data.repository.query.Param("start") java.time.LocalDate start,
             @org.springframework.data.repository.query.Param("end") java.time.LocalDate end);
+
+    @Query("""
+            SELECT c.name AS categoryName, c.emoji AS emoji, SUM(t.amount) AS total
+            FROM Transaction t
+            JOIN t.category c
+            WHERE t.type = com.ando.financiando.model.TransactionType.EXPENSE
+              AND t.occurredAt BETWEEN :start AND :end
+            GROUP BY c.name, c.emoji
+            ORDER BY SUM(t.amount) DESC
+            """)
+    List<com.ando.financiando.repository.projection.CategoryTotal> sumByCategoryBetween(
+            @org.springframework.data.repository.query.Param("start") java.time.LocalDate start,
+            @org.springframework.data.repository.query.Param("end") java.time.LocalDate end);
 }

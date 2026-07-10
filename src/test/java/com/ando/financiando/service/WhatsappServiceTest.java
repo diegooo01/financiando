@@ -36,6 +36,7 @@ class WhatsappServiceTest {
     private AiOnboardingParser aiOnboardingParser;
     private AiBudgetPlanner aiBudgetPlanner;
     private PendingBudgetPlanRepository pendingBudgetPlanRepository;
+    private AiInsightsService aiInsightsService;
 
     private WhatsappService service;
 
@@ -54,13 +55,14 @@ class WhatsappServiceTest {
         aiOnboardingParser = mock(AiOnboardingParser.class);
         aiBudgetPlanner = mock(AiBudgetPlanner.class);
         pendingBudgetPlanRepository = mock(PendingBudgetPlanRepository.class);
+        aiInsightsService = mock(AiInsightsService.class);
         ObjectMapper objectMapper = new ObjectMapper();
 
         service = new WhatsappService(expenseParser, transactionRepository,
                 balanceService, commandDetector, categoryRepository,
                 pendingSuggestionRepository, budgetService, aiBudgetParser,
                 aiOnboardingParser, aiBudgetPlanner, pendingBudgetPlanRepository,
-                objectMapper);
+                objectMapper, aiInsightsService);
 
         // Neutralizamos todas las ramas nuevas por defecto
         when(pendingSuggestionRepository.findByUserPhone(anyString()))
@@ -68,10 +70,13 @@ class WhatsappServiceTest {
         when(pendingBudgetPlanRepository.findByUserPhone(anyString()))
                 .thenReturn(Optional.empty());
         when(commandDetector.isBalanceQuery(anyString())).thenReturn(false);
+        when(commandDetector.isInsightsQuery(anyString())).thenReturn(false);
         when(commandDetector.isOnboardingRequest(anyString())).thenReturn(false);
         when(commandDetector.parseBudgetSet(anyString())).thenReturn(Optional.empty());
         when(commandDetector.isBudgetQuery(anyString())).thenReturn(false);
         when(aiBudgetParser.parse(anyString())).thenReturn(Optional.empty());
+        when(budgetService.checkAlert(any(), anyString()))
+                .thenReturn(new BudgetService.BudgetAlert(BudgetService.AlertLevel.NONE, null));
     }
 
     @Test
@@ -153,14 +158,12 @@ class WhatsappServiceTest {
 
         assertThat(reply).contains("te propongo");
         assertThat(reply).contains("Comida");
-        // Guardó el plan pendiente esperando confirmación, y NO guardó presupuestos aún
         verify(pendingBudgetPlanRepository).save(any());
         verify(budgetService, never()).setBudget(any(), any(), anyString());
     }
 
     @Test
     void confirmarPlanGuardaLosPresupuestos() throws Exception {
-        // Simulamos que hay un plan pendiente con 2 presupuestos en JSON
         String planJson = new ObjectMapper().writeValueAsString(List.of(
                 new AiBudgetPlanner.ProposedBudget(1L, "Comida", "🍽️", new BigDecimal("800")),
                 new AiBudgetPlanner.ProposedBudget(2L, "Transporte", "🚌", new BigDecimal("800"))));
@@ -173,8 +176,20 @@ class WhatsappServiceTest {
         String reply = service.buildReply("si", PHONE);
 
         assertThat(reply).contains("Guardé tus presupuestos");
-        // Guardó los 2 presupuestos y borró el plan pendiente
         verify(budgetService, org.mockito.Mockito.times(2)).setBudget(any(), any(), anyString());
         verify(pendingBudgetPlanRepository).deleteByUserPhone(PHONE);
+    }
+
+    @Test
+    void insightsDevuelveAnalisis() {
+        when(commandDetector.isInsightsQuery(anyString())).thenReturn(true);
+        when(aiInsightsService.generateMonthlyInsights())
+                .thenReturn("📊 Observaciones de tu mes:\n\n🔝 Tu mayor gasto es Comida");
+
+        String reply = service.buildReply("analiza mis gastos", PHONE);
+
+        assertThat(reply).contains("Observaciones");
+        verify(aiInsightsService).generateMonthlyInsights();
+        verify(transactionRepository, never()).save(any());
     }
 }

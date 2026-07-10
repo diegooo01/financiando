@@ -37,6 +37,7 @@ public class WhatsappService {
     private final AiBudgetPlanner aiBudgetPlanner;
     private final PendingBudgetPlanRepository pendingBudgetPlanRepository;
     private final ObjectMapper objectMapper;
+    private final AiInsightsService aiInsightsService;
 
     public WhatsappService(ExpenseParser expenseParser,
                            TransactionRepository transactionRepository,
@@ -49,7 +50,8 @@ public class WhatsappService {
                            AiOnboardingParser aiOnboardingParser,
                            AiBudgetPlanner aiBudgetPlanner,
                            PendingBudgetPlanRepository pendingBudgetPlanRepository,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper,
+                           AiInsightsService aiInsightsService) {
         this.expenseParser = expenseParser;
         this.transactionRepository = transactionRepository;
         this.balanceService = balanceService;
@@ -62,6 +64,7 @@ public class WhatsappService {
         this.aiBudgetPlanner = aiBudgetPlanner;
         this.pendingBudgetPlanRepository = pendingBudgetPlanRepository;
         this.objectMapper = objectMapper;
+        this.aiInsightsService = aiInsightsService;
     }
 
     @Transactional
@@ -96,6 +99,11 @@ public class WhatsappService {
         // PASO 2: ¿Es una consulta de balance?
         if (commandDetector.isBalanceQuery(incomingMessage)) {
             return buildBalanceReply();
+        }
+
+        // PASO 2.2: petición de insights/análisis
+        if (commandDetector.isInsightsQuery(incomingMessage)) {
+            return aiInsightsService.generateMonthlyInsights();
         }
 
         // PASO 2.3: petición de configurar presupuestos con IA
@@ -188,15 +196,50 @@ public class WhatsappService {
 
     private String registerExpense(BigDecimal amount, String description,
                                    Category category, String rawMessage) {
+        TransactionType type = category.getType();
+
         Transaction transaction = new Transaction(
                 amount, description, category,
-                LocalDate.now(), TransactionSource.WHATSAPP, TransactionType.EXPENSE);
+                LocalDate.now(), TransactionSource.WHATSAPP, type);
         transaction.setRawMessage(rawMessage);
         transactionRepository.save(transaction);
 
+        String verb = (type == TransactionType.INCOME) ? "Ingreso" : "Registrado";
+        String confirmation = String.format(
+                "✅ %s: %s S/%.2f en %s (%s)",
+                verb, category.getEmoji(), amount, category.getName(), description);
+
+        // Las alertas de presupuesto solo aplican a gastos
+        if (type == TransactionType.EXPENSE) {
+            String alert = buildAlertIfNeeded(category);
+            if (!alert.isEmpty()) {
+                return confirmation + "\n\n" + alert;
+            }
+        }
+
+        return confirmation;
+    }
+
+    private String buildAlertIfNeeded(Category category) {
+        String currentMonth = java.time.YearMonth.now().toString();
+        BudgetService.BudgetAlert alert = budgetService.checkAlert(category.getId(), currentMonth);
+
+        if (alert.level() == BudgetService.AlertLevel.NONE || alert.status() == null) {
+            return "";
+        }
+
+        BudgetService.BudgetStatus s = alert.status();
+
+        if (alert.level() == BudgetService.AlertLevel.EXCEEDED) {
+            return String.format(
+                    "🔴 ¡Te pasaste! Llevas %d%% de tu presupuesto de %s (S/%.2f de S/%.2f).",
+                    s.percentUsed(), s.categoryName(), s.spent(), s.limit());
+        }
+
+        // WARNING
         return String.format(
-                "✅ Registrado: %s S/%.2f en %s (%s)",
-                category.getEmoji(), amount, category.getName(), description);
+                "🟡 Cuidado: llevas %d%% de tu presupuesto de %s (S/%.2f de S/%.2f).",
+                s.percentUsed(), s.categoryName(), s.spent(), s.limit());
     }
 
     private String buildBalanceReply() {

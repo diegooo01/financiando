@@ -30,4 +30,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @org.springframework.data.repository.query.Param("type") com.ando.financiando.model.TransactionType type,
             @org.springframework.data.repository.query.Param("start") java.time.LocalDate start,
             @org.springframework.data.repository.query.Param("end") java.time.LocalDate end);
+
+    @Query("""
+            SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t
+            WHERE t.category.id = :categoryId
+              AND t.type = com.ando.financiando.model.TransactionType.EXPENSE
+              AND t.occurredAt BETWEEN :start AND :end
+            """)
+    java.math.BigDecimal sumExpensesByCategoryBetween(
+            @org.springframework.data.repository.query.Param("categoryId") Long categoryId,
+            @org.springframework.data.repository.query.Param("start") java.time.LocalDate start,
+            @org.springframework.data.repository.query.Param("end") java.time.LocalDate end);
 }

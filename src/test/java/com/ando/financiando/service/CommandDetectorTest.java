@@ -53,4 +53,32 @@ class CommandDetectorTest {
     void noDetectaNull() {
         assertThat(detector.isBalanceQuery(null)).isFalse();
     }
+
+    @Test
+    void detectaOnboardingConVerboEIngreso() {
+        assertThat(detector.isOnboardingRequest("configura mis presupuestos, gano 2000 y quiero ahorrar 400")).isTrue();
+    }
+
+    @Test
+    void detectaOnboardingSingularConIngreso() {
+        // El caso que fallaba: "mi presupuesto" (singular) + "gano"
+        assertThat(detector.isOnboardingRequest("arma mi presupuesto, gano 1200 y quiero ahorrar 350")).isTrue();
+    }
+
+    @Test
+    void detectaOnboardingSoloPorIngreso() {
+        assertThat(detector.isOnboardingRequest("mi presupuesto: sueldo 3000")).isTrue();
+    }
+
+    @Test
+    void consultaDePresupuestosNoEsOnboarding() {
+        // "mis presupuestos" a secas es consulta, NO onboarding
+        assertThat(detector.isOnboardingRequest("mis presupuestos")).isFalse();
+    }
+
+    @Test
+    void gastoNormalNoEsOnboarding() {
+        assertThat(detector.isOnboardingRequest("almuerzo 20")).isFalse();
+    }
 }
+

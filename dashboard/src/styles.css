@@ -1,0 +1,65 @@
+:root {
+  /* Tipografía */
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Semáforo (igual en ambos modos) */
+  --green: #0d9668;
+  --amber: #f59e0b;
+  --red: #e11d48;
+
+  /* Modo día (default) */
+  --bg: #faf9f7;
+  --bg-gradient: radial-gradient(circle at 20% 0%, #f0efec 0%, #faf9f7 60%);
+  --card: #ffffff;
+  --card-border: #eceae5;
+  --text: #1c1917;
+  --text-muted: #78716c;
+  --text-soft: #a8a29e;
+  --accent: #0d9668;
+  --accent-soft: #d1fae5;
+  --track: #f0efec;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+}
+
+:root.dark {
+  --bg: #0f172a;
+  --bg-gradient: radial-gradient(circle at 20% 0%, #1e293b 0%, #0f172a 60%);
+  --card: #1e293b;
+  --card-border: #334155;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-soft: #64748b;
+  --accent: #10b981;
+  --accent-soft: #064e3b;
+  --track: #334155;
+  --shadow: 0 1px 3px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.35);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Números alineados (tabular) para el dinero */
+.tabular { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}/* You can add global styles to this file, and also import other style files */

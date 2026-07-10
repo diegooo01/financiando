@@ -1,0 +1,24 @@
+<div class="card">
+  <h2>Movimientos recientes</h2>
+  @if (loading()) {
+    <p class="muted">Cargando movimientos...</p>
+  } @else if (error()) {
+    <p class="error">No se pudieron cargar los movimientos.</p>
+  } @else if (transactions().length === 0) {
+    <p class="muted">Aún no hay movimientos.</p>
+  } @else {
+    <ul class="list">
+      @for (t of transactions(); track t.id) {
+        <li class="item">
+          <div class="left">
+            <span class="desc">{{ t.description }}</span>
+            <span class="cat">{{ t.categoryName }} · {{ t.occurredAt }}</span>
+          </div>
+          <span class="amount" [class.income]="t.type === 'INCOME'" [class.expense]="t.type === 'EXPENSE'">
+            {{ t.type === 'INCOME' ? '+' : '-' }} S/ {{ t.amount.toFixed(2) }}
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</div>

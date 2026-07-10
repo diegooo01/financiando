@@ -1,0 +1,28 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">💰</span>
+      <div class="brand-text">
+        <span class="brand-name">Financiando</span>
+        <span class="brand-sub">{{ greeting }}, aquí va tu mes</span>
+      </div>
+    </div>
+
+    <button class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="isDark() ? 'Activar modo día' : 'Activar modo noche'">
+      <span class="toggle-track" [class.on]="isDark()">
+        <span class="toggle-thumb">{{ isDark() ? '🌙' : '☀️' }}</span>
+      </span>
+    </button>
+  </header>
+
+  <main class="grid">
+    <div class="col-a">
+      <app-balance-card></app-balance-card>
+      <app-budget-bars></app-budget-bars>
+    </div>
+    <div class="col-b">
+      <app-spending-chart></app-spending-chart>
+      <app-transaction-list></app-transaction-list>
+    </div>
+  </main>
+</div>

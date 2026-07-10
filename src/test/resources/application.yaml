@@ -3,8 +3,8 @@ twilio:
 
 ai:
   api-key: dummy_ai_key_for_tests
-  base-url: https://openrouter.ai/api/v1
-  model: openrouter/free
+  base-url: https://api.deepseek.com
+  model: deepseek-v4-flash
 
 spring:
   datasource:

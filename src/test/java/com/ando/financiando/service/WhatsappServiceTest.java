@@ -4,8 +4,10 @@ import com.ando.financiando.model.Category;
 import com.ando.financiando.model.PendingSuggestion;
 import com.ando.financiando.model.TransactionType;
 import com.ando.financiando.repository.CategoryRepository;
+import com.ando.financiando.repository.PendingBudgetPlanRepository;
 import com.ando.financiando.repository.PendingSuggestionRepository;
 import com.ando.financiando.repository.TransactionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +31,11 @@ class WhatsappServiceTest {
     private CommandDetector commandDetector;
     private CategoryRepository categoryRepository;
     private PendingSuggestionRepository pendingSuggestionRepository;
+    private BudgetService budgetService;
+    private AiBudgetParser aiBudgetParser;
+    private AiOnboardingParser aiOnboardingParser;
+    private AiBudgetPlanner aiBudgetPlanner;
+    private PendingBudgetPlanRepository pendingBudgetPlanRepository;
 
     private WhatsappService service;
 
@@ -42,15 +49,29 @@ class WhatsappServiceTest {
         commandDetector = mock(CommandDetector.class);
         categoryRepository = mock(CategoryRepository.class);
         pendingSuggestionRepository = mock(PendingSuggestionRepository.class);
+        budgetService = mock(BudgetService.class);
+        aiBudgetParser = mock(AiBudgetParser.class);
+        aiOnboardingParser = mock(AiOnboardingParser.class);
+        aiBudgetPlanner = mock(AiBudgetPlanner.class);
+        pendingBudgetPlanRepository = mock(PendingBudgetPlanRepository.class);
+        ObjectMapper objectMapper = new ObjectMapper();
 
         service = new WhatsappService(expenseParser, transactionRepository,
                 balanceService, commandDetector, categoryRepository,
-                pendingSuggestionRepository);
+                pendingSuggestionRepository, budgetService, aiBudgetParser,
+                aiOnboardingParser, aiBudgetPlanner, pendingBudgetPlanRepository,
+                objectMapper);
 
-        // Por defecto: sin pendiente, no es balance
+        // Neutralizamos todas las ramas nuevas por defecto
         when(pendingSuggestionRepository.findByUserPhone(anyString()))
                 .thenReturn(Optional.empty());
+        when(pendingBudgetPlanRepository.findByUserPhone(anyString()))
+                .thenReturn(Optional.empty());
         when(commandDetector.isBalanceQuery(anyString())).thenReturn(false);
+        when(commandDetector.isOnboardingRequest(anyString())).thenReturn(false);
+        when(commandDetector.parseBudgetSet(anyString())).thenReturn(Optional.empty());
+        when(commandDetector.isBudgetQuery(anyString())).thenReturn(false);
+        when(aiBudgetParser.parse(anyString())).thenReturn(Optional.empty());
     }
 
     @Test
@@ -76,7 +97,6 @@ class WhatsappServiceTest {
 
         assertThat(reply).contains("categoría nueva");
         assertThat(reply).contains("Mascotas");
-        // Guardó el estado pendiente y NO registró el gasto todavía
         verify(pendingSuggestionRepository).save(any());
         verify(transactionRepository, never()).save(any());
     }
@@ -113,9 +133,48 @@ class WhatsappServiceTest {
         String reply = service.buildReply("no", PHONE);
 
         assertThat(reply).contains("Registrado");
-        // NO creó categoría nueva, pero sí registró el gasto
         verify(categoryRepository, never()).save(any());
         verify(transactionRepository).save(any());
         verify(pendingSuggestionRepository).deleteByUserPhone(PHONE);
+    }
+
+    @Test
+    void onboardingProponePlanYGuardaPendiente() {
+        when(commandDetector.isOnboardingRequest(anyString())).thenReturn(true);
+        when(aiOnboardingParser.parse(anyString()))
+                .thenReturn(Optional.of(new AiOnboardingParser.OnboardingData(
+                        new BigDecimal("2000"), new BigDecimal("400"))));
+        when(aiBudgetPlanner.propose(any(), any()))
+                .thenReturn(Optional.of(List.of(
+                        new AiBudgetPlanner.ProposedBudget(1L, "Comida", "🍽️", new BigDecimal("800")),
+                        new AiBudgetPlanner.ProposedBudget(2L, "Transporte", "🚌", new BigDecimal("800")))));
+
+        String reply = service.buildReply("configura mis presupuestos, gano 2000 ahorro 400", PHONE);
+
+        assertThat(reply).contains("te propongo");
+        assertThat(reply).contains("Comida");
+        // Guardó el plan pendiente esperando confirmación, y NO guardó presupuestos aún
+        verify(pendingBudgetPlanRepository).save(any());
+        verify(budgetService, never()).setBudget(any(), any(), anyString());
+    }
+
+    @Test
+    void confirmarPlanGuardaLosPresupuestos() throws Exception {
+        // Simulamos que hay un plan pendiente con 2 presupuestos en JSON
+        String planJson = new ObjectMapper().writeValueAsString(List.of(
+                new AiBudgetPlanner.ProposedBudget(1L, "Comida", "🍽️", new BigDecimal("800")),
+                new AiBudgetPlanner.ProposedBudget(2L, "Transporte", "🚌", new BigDecimal("800"))));
+
+        com.ando.financiando.model.PendingBudgetPlan plan =
+                new com.ando.financiando.model.PendingBudgetPlan(PHONE, planJson);
+        when(pendingBudgetPlanRepository.findByUserPhone(PHONE))
+                .thenReturn(Optional.of(plan));
+
+        String reply = service.buildReply("si", PHONE);
+
+        assertThat(reply).contains("Guardé tus presupuestos");
+        // Guardó los 2 presupuestos y borró el plan pendiente
+        verify(budgetService, org.mockito.Mockito.times(2)).setBudget(any(), any(), anyString());
+        verify(pendingBudgetPlanRepository).deleteByUserPhone(PHONE);
     }
 }

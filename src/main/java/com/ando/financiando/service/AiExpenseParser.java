@@ -64,10 +64,11 @@ public class AiExpenseParser {
     }
 
     private AiParseResult parseAiResponse(String rawResponse) throws Exception {
-        String cleaned = rawResponse
-                .replaceAll("(?s)```json", "")
-                .replaceAll("(?s)```", "")
-                .trim();
+        String cleaned = extractJson(rawResponse);
+        if (cleaned == null) {
+            log.warn("La IA no devolvió un JSON reconocible: {}", rawResponse);
+            return AiParseResult.failure();
+        }
 
         JsonNode json = objectMapper.readTree(cleaned);
 
@@ -93,5 +94,17 @@ public class AiExpenseParser {
         }
         String value = node.asText();
         return value.isBlank() || value.equalsIgnoreCase("null") ? null : value;
+    }
+
+    private String extractJson(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        int start = raw.indexOf('{');
+        int end = raw.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return raw.substring(start, end + 1);
+        }
+        return null;
     }
 }

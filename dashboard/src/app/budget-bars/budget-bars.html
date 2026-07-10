@@ -1,0 +1,30 @@
+<div class="card">
+  <h2>Presupuestos del mes</h2>
+  @if (loading()) {
+    <p class="muted">Cargando presupuestos...</p>
+  } @else if (error()) {
+    <p class="error">No se pudieron cargar los presupuestos.</p>
+  } @else if (budgets().length === 0) {
+    <p class="muted">No tienes presupuestos este mes.</p>
+  } @else {
+    <div class="bars">
+      @for (b of budgets(); track b.categoryName) {
+        <div class="budget">
+          <div class="budget-header">
+            <span>{{ b.emoji }} {{ b.categoryName }}</span>
+            <span class="amounts">S/ {{ b.spent.toFixed(2) }} / S/ {{ b.limit.toFixed(2) }}</span>
+          </div>
+          <div class="track">
+            <div class="fill"
+                 [style.width.%]="barWidth(b.percentUsed)"
+                 [style.background]="barColor(b.percentUsed)">
+            </div>
+          </div>
+          <span class="percent" [style.color]="barColor(b.percentUsed)">
+            {{ b.percentUsed }}%
+          </span>
+        </div>
+      }
+    </div>
+  }
+</div>

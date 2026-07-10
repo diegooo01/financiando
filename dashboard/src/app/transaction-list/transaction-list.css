@@ -1,0 +1,42 @@
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0 0 18px;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.item:last-child { border-bottom: none; }
+
+.left { display: flex; flex-direction: column; gap: 3px; }
+.desc { color: var(--text); font-weight: 500; }
+.cat { color: var(--text-soft); font-size: 0.82rem; }
+
+.amount { font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.amount.income { color: var(--green); }
+.amount.expense { color: var(--red); }
+
+.muted { color: var(--text-soft); }
+.error { color: var(--red); }

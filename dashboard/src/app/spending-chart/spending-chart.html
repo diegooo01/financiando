@@ -1,0 +1,13 @@
+<div class="card">
+  <h2>Gastos por categoría</h2>
+  @if (loading()) {
+    <p class="muted">Cargando gráfico...</p>
+  } @else if (error()) {
+    <p class="error">No se pudo cargar el gráfico.</p>
+  } @else if (!hasData()) {
+    <p class="muted">Aún no hay gastos este mes.</p>
+  }
+  <div class="chart-container" [style.display]="hasData() ? 'block' : 'none'">
+    <canvas #canvas></canvas>
+  </div>
+</div>

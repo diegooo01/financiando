@@ -1,0 +1,25 @@
+<div class="card">
+  @if (loading()) {
+    <p class="muted">Cargando balance...</p>
+  } @else if (error()) {
+    <p class="error">No se pudo cargar el balance. ¿Está corriendo el backend?</p>
+  } @else if (balance(); as b) {
+    <h2>Balance del mes</h2>
+    <div class="rows">
+      <div class="row">
+        <span>💰 Ingresos</span>
+        <span class="income">S/ {{ b.income.toFixed(2) }}</span>
+      </div>
+      <div class="row">
+        <span>💸 Gastos</span>
+        <span class="expense">S/ {{ b.expenses.toFixed(2) }}</span>
+      </div>
+      <div class="row total">
+        <span>{{ b.net >= 0 ? '✅' : '⚠️' }} Neto</span>
+        <span [class.positive]="b.net >= 0" [class.negative]="b.net < 0">
+          S/ {{ b.net.toFixed(2) }}
+        </span>
+      </div>
+    </div>
+  }
+</div>

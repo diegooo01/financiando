@@ -86,4 +86,16 @@ public class CommandDetector {
 
     public record BudgetCommand(String categoryName, BigDecimal amount) {
     }
+
+    private static final List<String> INSIGHTS_PHRASES = List.of(
+            "analiza mis gastos", "analiza mis finanzas", "insights",
+            "dame insights", "analizame", "como estan mis finanzas",
+            "recomendaciones", "consejos", "que opinas de mis gastos",
+            "analisis", "revisa mis gastos"
+    );
+
+    public boolean isInsightsQuery(String message) {
+        String normalized = normalize(message);
+        return !normalized.isBlank() && INSIGHTS_PHRASES.stream().anyMatch(normalized::contains);
+    }
 }

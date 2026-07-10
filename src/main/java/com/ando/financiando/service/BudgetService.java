@@ -83,4 +83,49 @@ public class BudgetService {
             BigDecimal remaining,
             int percentUsed) {
     }
+
+    public BudgetAlert checkAlert(Long categoryId, String yearMonth) {
+        Budget budget = budgetRepository
+                .findByCategoryIdAndYearMonth(categoryId, yearMonth)
+                .orElse(null);
+
+        if (budget == null) {
+            return new BudgetAlert(AlertLevel.NONE, null);
+        }
+
+        YearMonth ym = YearMonth.parse(yearMonth);
+        BigDecimal spent = transactionRepository.sumExpensesByCategoryBetween(
+                categoryId, ym.atDay(1), ym.atEndOfMonth());
+
+        BigDecimal limit = budget.getMonthlyLimit();
+        if (limit.compareTo(BigDecimal.ZERO) <= 0) {
+            return new BudgetAlert(AlertLevel.NONE, null);
+        }
+
+        int percent = spent.multiply(BigDecimal.valueOf(100))
+                .divide(limit, 0, RoundingMode.HALF_UP)
+                .intValue();
+
+        AlertLevel level;
+        if (percent >= 100) {
+            level = AlertLevel.EXCEEDED;
+        } else if (percent >= 80) {
+            level = AlertLevel.WARNING;
+        } else {
+            level = AlertLevel.NONE;
+        }
+
+        return new BudgetAlert(level, new BudgetStatus(
+                budget.getCategory().getName(),
+                budget.getCategory().getEmoji(),
+                limit, spent, limit.subtract(spent), percent));
+    }
+
+    public enum AlertLevel {
+        NONE, WARNING, EXCEEDED
+    }
+
+    public record BudgetAlert(AlertLevel level, BudgetStatus status) {
+    }
+
 }

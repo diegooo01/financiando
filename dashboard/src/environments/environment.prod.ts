@@ -1,3 +1,3 @@
 export const environment = {
-  apiUrl: 'https://TU-BACKEND-EN-PRODUCCION/api'
+  apiUrl: 'https://kori-1ub3.onrender.com/api'
 };
